@@ -8,12 +8,7 @@ import java.util.HashSet;
 public class ArithmeticDemo {
     public static void main(String[] args) {
         String s = String.join(" ", args);
-        parse("");
-        parse("2+2");
-        parse("2+-2");
-        parse("2++");
-        parse("2+2.");
-        parse("2+co");
+        parse(s);
     }
 
     private static void parse(String s) {
@@ -91,5 +86,6 @@ public class ArithmeticDemo {
         } catch (ParsingException e) {
             System.out.println("ParsingException: " + e.getMessage());
         }
+        System.out.println();
     }
 }
