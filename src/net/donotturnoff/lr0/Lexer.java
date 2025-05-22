@@ -1,7 +1,6 @@
 package net.donotturnoff.lr0;
 
-import java.util.Queue;
-import java.util.LinkedList;
+import java.util.*;
 
 public class Lexer {
 
@@ -44,6 +43,14 @@ public class Lexer {
         } while (! (t instanceof EOF));
         return tokens;
     }
+    
+    private Map<String, Range> positionMetadata() {
+        return new HashMap<>(Map.of(
+            "line", new Range(line, line), // TODO: show entire range
+            "column", new Range(column, column),
+            "index", new Range(i, i)
+        ));
+    }
 
     private Terminal<Void> consumeCos() throws LexingException {
         getChar();
@@ -60,7 +67,7 @@ public class Lexer {
         char thd = nextChar;
         getChar();
         if (snd == 'o' && thd == 's') {
-            return new Terminal<>("COSINE", line, column);
+            return new Terminal<>("COSINE", positionMetadata());
         } else {
             throw new LexingException("Expected \"cos\", got \"c" + snd + thd + "\" (line " + line + ", column " + column + ")");
         }
@@ -80,14 +87,12 @@ public class Lexer {
             } else if (!Character.isDigit(nextChar)) {
                 throw new LexingException("Expected digit following decimal point, got \"" + nextChar + "\" (line " + line + ", column " + column + ")");
             }
-            s.append(nextChar);
-            getChar();
-            while (Character.isDigit(nextChar) && !end) {
+            do {
                 s.append(nextChar);
                 getChar();
-            }
+            } while (Character.isDigit(nextChar) && !end);
         }
-        return new Terminal<>("U_FLOAT", line, column, Double.parseDouble(s.toString()));
+        return new Terminal<>("U_FLOAT", positionMetadata(), Double.parseDouble(s.toString()));
     }
 
     private void consumeWhiteSpace() {
@@ -104,22 +109,22 @@ public class Lexer {
         } else {
             switch (nextChar) {
                 case '(':
-                    t = new Terminal<Void>("LPAREN", line, column); getChar();
+                    t = new Terminal<Void>("LPAREN", positionMetadata()); getChar();
                     break;
                 case ')':
-                    t = new Terminal<Void>("RPAREN", line, column); getChar();
+                    t = new Terminal<Void>("RPAREN", positionMetadata()); getChar();
                     break;
                 case '+':
-                    t = new Terminal<Void>("PLUS", line, column); getChar();
+                    t = new Terminal<Void>("PLUS", positionMetadata()); getChar();
                     break;
                 case '-':
-                    t = new Terminal<Void>("MINUS", line, column); getChar();
+                    t = new Terminal<Void>("MINUS", positionMetadata()); getChar();
                     break;
                 case '*':
-                    t = new Terminal<Void>("TIMES", line, column); getChar();
+                    t = new Terminal<Void>("TIMES", positionMetadata()); getChar();
                     break;
                 case '!':
-                    t = new Terminal<Void>("FACTORIAL", line, column); getChar();
+                    t = new Terminal<Void>("FACTORIAL", positionMetadata()); getChar();
                     break;
                 case 'c':
                     t = consumeCos();

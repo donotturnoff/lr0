@@ -1,35 +1,64 @@
 package net.donotturnoff.lr0;
 
-import java.util.Queue;
-import java.util.Stack;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
-public class Parser {
+public class Parser implements Serializable {
     
-    private final Table<Set<Item>, Terminal<?>, Action<?>> action;
-    private final Table<Set<Item>, NonTerminal, Set<Item>> goTo;
-    private final Set<Item> start;
+    private Table<Set<Item>, Terminal<?>, Action> action;
+    private Table<Set<Item>, NonTerminal, Set<Item>> goTo;
+    private Set<Item> start;
     
-    private Terminal<?> nextToken;
-    private Queue<Terminal<?>> tokens;
-    private Terminal<?> lastTerminal;
+    private transient Queue<Terminal<?>> tokens;
+    private transient Terminal<?> lastToken;
+    private transient int i = -1;
     
     public Parser(Grammar g) {
+        generateParser(g);
+    }
+
+    public Parser(Grammar g, String path) {
+        try {
+            FileInputStream fis = new FileInputStream(path);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            Parser p = (Parser) ois.readObject();
+            ois.close();
+            this.action = p.action;
+            this.goTo = p.goTo;
+            this.start = p.start;
+        } catch (IOException|ClassNotFoundException e) {
+            System.out.println("[-] Failed to load parser from \"" + path + "\": " + e);
+            generateParser(g);
+        }
+
+        try {
+            FileOutputStream fos = new FileOutputStream(path);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(this);
+            oos.close();
+        } catch (IOException e) {
+            System.out.println("[-] Failed to save parser to \"" + path + "\": " + e);
+        }
+    }
+
+    private void generateParser(Grammar g) {
         TableGenerator tg = new TableGenerator(g);
         action = tg.getAction();
         goTo = tg.getGoTo();
         start = tg.getStart();
-        lastTerminal = new EOF();
+        lastToken = new EOF();
     }
     
-    private void getToken() {
-        nextToken = tokens.poll();
+    private Terminal<?> getToken() {
+        Terminal<?> nextToken = tokens.poll();
+        if (nextToken == null) {
+            return new EOF();
+        }
+        i++;
+        return nextToken;
     }
     
     public Node parse(Queue<Terminal<?>> tokens) throws ParsingException {
-
         if (tokens.isEmpty()) {
             return null;
         }
@@ -38,35 +67,34 @@ public class Parser {
         stack.push(new Frame(start, new Node(new AugmentedStartSymbol())));
     
         this.tokens = tokens;
-        getToken();
+        Terminal<?> nextToken = getToken();
         
         while (true) {
             Frame f = stack.peek();
-            Action<?> a = action.get(f.getState(), nextToken);
+            Action a = action.get(f.getState(), nextToken);
             if (a == null) {
-                Token<?> t = lastTerminal.getToken();
-                if (t != null) {
-                    int line = t.getLine();
-                    int column = t.getColumn();
-                    throw new ParsingException("Unexpected token: " + lastTerminal + " (line " + line + ", column " + column + ")");
-                } else {
-                    throw new ParsingException("Unexpected token: " + lastTerminal);
-                }
-            } else if (a.getType() == Action.SHIFT) {
-                stack.push(new Frame((Set<Item>) a.getData(), new Node(nextToken)));
-                lastTerminal = nextToken;
-                getToken();
-            } else if (a.getType() == Action.REDUCE) {
-                Production p = (Production) a.getData();
+                throw new ParsingException("Unexpected token: " + lastToken + " at " + lastToken.getRanges());
+            } else if (a instanceof ShiftAction s) {
+                nextToken.putRange("tokens", i, i);
+                stack.push(new Frame(s.getNextState(), new Node(nextToken)));
+                lastToken = nextToken;
+                nextToken = getToken();
+            } else if (a instanceof ReduceAction r) {
+                Production p = r.getProduction();
+
                 List<Node> children = new LinkedList<>();
                 for (int i = 0; i < p.getBody().size(); i++) {
                     Frame top = stack.pop();
                     children.add(0, top.getNode());
                 }
+
                 Frame top = stack.peek();
-                Set<Item> nextState = goTo.get(top.getState(), p.getHead());
-                stack.push(new Frame(nextState, new Node(p.getHead(), children)));
-            } else if (a.getType() == Action.ACCEPT) {
+                NonTerminal head = new NonTerminal(p.getHead().getName());
+                Set<Item> nextState = goTo.get(top.getState(), head);
+                head.mergeRanges(children.get(0).getSymbol().getRanges());
+                head.mergeRanges(children.get(children.size()-1).getSymbol().getRanges());
+                stack.push(new Frame(nextState, new Node(head, children)));
+            } else if (a instanceof AcceptAction) {
                 break;
             }
         }

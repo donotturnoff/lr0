@@ -18,4 +18,8 @@ public class Frame {
     public Node getNode() {
         return node;
     }
+    
+    public String toString() {
+        return "Frame[state=" + state + ", node=" + node + "]";
+    }
 }

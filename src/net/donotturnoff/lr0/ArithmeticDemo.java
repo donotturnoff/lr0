@@ -2,8 +2,6 @@ package net.donotturnoff.lr0;
 
 import java.util.Queue;
 import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 
 public class ArithmeticDemo {
     public static void main(String[] args) {
@@ -40,45 +38,25 @@ public class ArithmeticDemo {
         Terminal<Void> tFactorial = new Terminal<>("FACTORIAL");
         Terminal<Void> tUFloat = new Terminal<>("U_FLOAT");
 
-        Set<Symbol<?>> symbols = new HashSet<>();
+        Productions productions = new Productions();
+        productions.add(ntStart, List.of(ntPlus));
+        productions.add(ntPlus, List.of(ntPlus, tPlus, ntMinus));
+        productions.add(ntPlus, List.of(ntMinus));
+        productions.add(ntMinus, List.of(ntMinus, tMinus, ntTimes));
+        productions.add(ntMinus, List.of(ntTimes));
+        productions.add(ntTimes, List.of(ntCosine, tTimes, ntTimes));
+        productions.add(ntTimes, List.of(ntCosine));
+        productions.add(ntCosine, List.of(tCosine, ntFactorial));
+        productions.add(ntCosine, List.of(ntFactorial));
+        productions.add(ntFactorial, List.of(ntFactor, tFactorial));
+        productions.add(ntFactorial, List.of(ntFactor));
+        productions.add(ntFactor, List.of(tLparen, ntPlus, tRparen));
+        productions.add(ntFactor, List.of(ntFloat));
+        productions.add(ntFloat, List.of(tPlus, tUFloat));
+        productions.add(ntFloat, List.of(tMinus, tUFloat));
+        productions.add(ntFloat, List.of(tUFloat));
 
-        symbols.add(tLparen);
-        symbols.add(tRparen);
-        symbols.add(tPlus);
-        symbols.add(tMinus);
-        symbols.add(tTimes);
-        symbols.add(tCosine);
-        symbols.add(tFactorial);
-        symbols.add(tUFloat);
-
-        symbols.add(ntStart);
-        symbols.add(ntPlus);
-        symbols.add(ntMinus);
-        symbols.add(ntTimes);
-        symbols.add(ntCosine);
-        symbols.add(ntFactorial);
-        symbols.add(ntFactor);
-        symbols.add(ntFloat);
-
-        Set<Production> productions = new HashSet<>();
-        productions.add(new Production(ntStart, List.of(ntPlus)));
-        productions.add(new Production(ntPlus, List.of(ntPlus, tPlus, ntMinus)));
-        productions.add(new Production(ntPlus, List.of(ntMinus)));
-        productions.add(new Production(ntMinus, List.of(ntMinus, tMinus, ntTimes)));
-        productions.add(new Production(ntMinus, List.of(ntTimes)));
-        productions.add(new Production(ntTimes, List.of(ntCosine, tTimes, ntTimes)));
-        productions.add(new Production(ntTimes, List.of(ntCosine)));
-        productions.add(new Production(ntCosine, List.of(tCosine, ntFactorial)));
-        productions.add(new Production(ntCosine, List.of(ntFactorial)));
-        productions.add(new Production(ntFactorial, List.of(ntFactor, tFactorial)));
-        productions.add(new Production(ntFactorial, List.of(ntFactor)));
-        productions.add(new Production(ntFactor, List.of(tLparen, ntPlus, tRparen)));
-        productions.add(new Production(ntFactor, List.of(ntFloat)));
-        productions.add(new Production(ntFloat, List.of(tPlus, tUFloat)));
-        productions.add(new Production(ntFloat, List.of(tMinus, tUFloat)));
-        productions.add(new Production(ntFloat, List.of(tUFloat)));
-
-        Grammar g = new Grammar(symbols, productions, ntStart);
+        Grammar g = new Grammar(productions, ntStart);
 
         try {
             Parser p = new Parser(g);

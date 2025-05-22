@@ -1,8 +1,9 @@
 package net.donotturnoff.lr0;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Item {
+public class Item implements Serializable {
     private final Production p;
     private final int index;
     

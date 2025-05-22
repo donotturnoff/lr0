@@ -1,9 +1,10 @@
 package net.donotturnoff.lr0;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.HashMap;
 
-public class Table<T, U, V> {
+public class Table<T, U, V> implements Serializable {
     private final Map<T, Map<U, V>> contents;
     
     public Table() {

@@ -9,20 +9,16 @@ import java.util.stream.Collectors;
 
 public class Grammar {
     private final Set<Symbol<?>> symbols;
-    private final Set<Production> productions;
-    private final AugmentedStartSymbol start;
+    private final Productions productions;
     private Map<Symbol<?>, Set<Terminal<?>>> first;
     private Map<NonTerminal, Set<Terminal<?>>> follow;
-    private final Production startProduction;
-    
-    public Grammar(Set<Symbol<?>> symbols, Set<Production> productions, NonTerminal originalStart) {
-        this.symbols = symbols;
+
+    public Grammar(Productions productions, NonTerminal originalStart) {
         this.productions = productions;
+        this.symbols = productions.getSymbols();
         computeFirst();
         computeFollow(originalStart);
-        this.start = new AugmentedStartSymbol();
-        this.startProduction = new Production(this.start, List.of(originalStart));
-        productions.add(this.startProduction);
+        productions.add(new AugmentedStartSymbol(), List.of(originalStart));
     }
     
     private void computeFirst() {
@@ -44,9 +40,9 @@ public class Grammar {
                 if (s instanceof NonTerminal) {
                     Set<Production> ps = getProductions((NonTerminal) s);
                     for (Production p: ps) {
-                        List<Symbol<?>> body = p.getBody().stream().filter(x -> !(x instanceof Epsilon)).collect(Collectors.toList());
+                        List<Symbol<?>> body = p.getBody().stream().filter(x -> !(x instanceof Epsilon)).toList();
                         Set<Terminal<?>> newFirst = new HashSet<>(first.get(s));
-                        if (body.size() == 0) {
+                        if (body.isEmpty()) {
                             altered = altered || newFirst.add(new Epsilon());
                         } else {
                             altered = altered || newFirst.addAll(first.get(body.get(0)));
@@ -74,7 +70,7 @@ public class Grammar {
         boolean altered;
         do {
             Map<NonTerminal, Set<Terminal<?>>> newFollow = new HashMap<>(follow);
-            for (Production p: productions) {
+            for (Production p: productions.get()) {
                 List<Symbol<?>> body = p.getBody();
                 for (int i = 0; i < body.size()-1; i++) {
                     Symbol<?> s = body.get(i);
@@ -105,23 +101,15 @@ public class Grammar {
     }
     
     public Production getStartProduction() {
-        return startProduction;
+        return List.copyOf(productions.get(new AugmentedStartSymbol())).get(0);
     }
     
     public Set<Symbol<?>> getSymbols() {
         return symbols;
     }
-    
-    public Set<Production> getProductions() {
-        return productions;
-    }
-    
+
     public Set<Production> getProductions(NonTerminal head) {
-        return productions.stream().filter(p -> p.getHead().equals(head)).collect(Collectors.toSet());
-    }
-    
-    public AugmentedStartSymbol getStart() {
-        return start;
+        return productions.get(head);
     }
     
     public Set<Terminal<?>> first(Symbol<?> s) {

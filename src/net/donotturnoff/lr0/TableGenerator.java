@@ -1,5 +1,6 @@
 package net.donotturnoff.lr0;
 
+import java.io.FileInputStream;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -14,7 +15,7 @@ public class TableGenerator {
         constructStates();
     }
     
-    public Set<Item> closure(Set<Item> s) {
+    private Set<Item> closure(Set<Item> s) {
         Set<Item> closure = new HashSet<>(s);
         
         boolean altered; 
@@ -23,8 +24,8 @@ public class TableGenerator {
             Set<Item> newClosure = new HashSet<>(closure);
             for (Item i: closure) {
                 Symbol<?> b = i.getNextSymbol();
-                for (Production p: g.getProductions()) {
-                    if (p.getHead().equals(b)) {
+                if (b instanceof NonTerminal) {
+                    for (Production p : g.getProductions((NonTerminal) b)) {
                         altered = altered || newClosure.add(new Item(p, 0));
                     }
                 }
@@ -32,10 +33,10 @@ public class TableGenerator {
             closure = newClosure;
         } while (altered);
         
-        return closure;   
+        return closure;
     }
     
-    public Set<Item> goTo(Set<Item> s, Symbol<?> x) {
+    private Set<Item> goTo(Set<Item> s, Symbol<?> x) {
         Set<Item> next = new HashSet<>();
         for (Item i: s) {
             Symbol<?> nextSymbol = i.getNextSymbol();
@@ -43,7 +44,8 @@ public class TableGenerator {
                 next.add(new Item(i.getProduction(), i.getIndex()+1));
             }
         }
-        return closure(next);
+        Set<Item> c = closure(next);
+        return c;
     }
     
     private void constructStates() {
@@ -89,8 +91,8 @@ public class TableGenerator {
         return goTo;
     }
      
-    public Table<Set<Item>, Terminal<?>, Action<?>> getAction() {
-        Table<Set<Item>, Terminal<?>, Action<?>> action = new Table<>();
+    public Table<Set<Item>, Terminal<?>, Action> getAction() {
+        Table<Set<Item>, Terminal<?>, Action> action = new Table<>();
 
         for (Set<Item> s: states) {
             for (Item i: s) {
@@ -98,13 +100,13 @@ public class TableGenerator {
                     Symbol<?> nextSymbol = i.getNextSymbol();
                     Set<Item> nextState = goTo(s, nextSymbol);
                     if (nextState != null && nextSymbol instanceof Terminal) {
-                        action.put(s, (Terminal<?>) nextSymbol, new Action<>(Action.SHIFT, nextState));
+                        action.put(s, (Terminal<?>) nextSymbol, new ShiftAction(nextState));
                     }
                 } else if (i.getHead() instanceof AugmentedStartSymbol && i.isAtEnd()) {
-                    action.put(s, new EOF(), new Action<>(Action.ACCEPT));
+                    action.put(s, new EOF(), new AcceptAction());
                 } else if (!(i.getHead() instanceof AugmentedStartSymbol) && i.isAtEnd()) {
                     for (Terminal<?> a: g.follow(i.getHead())) {
-                        action.put(s, a, new Action<>(Action.REDUCE, i.getProduction()));
+                        action.put(s, a, new ReduceAction(i.getProduction()));
                     }
                 }
             }
