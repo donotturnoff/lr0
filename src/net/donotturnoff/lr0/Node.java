@@ -98,17 +98,20 @@ public class Node {
     }
 
     public boolean isPrecededByA(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
-        List<Node> siblings = parent.children;
-        if (indexInParent == 0) {
-            return parent.isPrecededByA(targets, avoid);
+        if (parent == null) {
+            return false;
         }
 
-        SearchResult res = siblings.get(indexInParent-1).endsWithAHelper(targets, avoid);
-        if (res == SearchResult.AVOIDED) {
-            return parent.isPrecededByA(targets, avoid);
-        } else {
-            return res == SearchResult.FOUND;
+        List<Node> siblings = parent.children;
+
+        for (int i = indexInParent-1; i >= 0; i--) {
+            SearchResult res = siblings.get(i).endsWithAHelper(targets, avoid);
+            if (res != SearchResult.AVOIDED) {
+                return res == SearchResult.FOUND;
+            }
         }
+
+        return parent.isPrecededByA(targets, avoid);
     }
 
     public boolean isFollowedByA(Symbol<?> target) {
@@ -128,17 +131,20 @@ public class Node {
     }
 
     public boolean isFollowedByA(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
-        List<Node> siblings = parent.children;
-        if (indexInParent >= siblings.size()-1) {
-            return parent.isFollowedByA(targets, avoid);
+        if (parent == null) {
+            return false;
         }
 
-        SearchResult res = siblings.get(indexInParent+1).startsWithAHelper(targets, avoid);
-        if (res == SearchResult.AVOIDED) {
-            return parent.isFollowedByA(targets, avoid);
-        } else {
-            return res == SearchResult.FOUND;
+        List<Node> siblings = parent.children;
+
+        for (int i = indexInParent+1; i < siblings.size(); i++) {
+            SearchResult res = siblings.get(i).startsWithAHelper(targets, avoid);
+            if (res != SearchResult.AVOIDED) {
+                return res == SearchResult.FOUND;
+            }
         }
+
+        return parent.isFollowedByA(targets, avoid);
     }
 
     public boolean startsWithA(Symbol<?> target) {
