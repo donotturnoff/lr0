@@ -223,7 +223,7 @@ public class Node {
 
         int i = children.size()-1;
         while (i >= 0) {
-            SearchResult res = children.get(i).startsWithAHelper(targets, avoid);
+            SearchResult res = children.get(i).endsWithAHelper(targets, avoid);
             if (Set.of(SearchResult.FOUND, SearchResult.NOT_FOUND).contains(res)) {
                 return res;
             }
