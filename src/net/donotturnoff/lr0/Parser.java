@@ -17,8 +17,7 @@ public class Parser implements Serializable {
         generateParser(g);
     }
 
-    public Parser(Grammar g, String path) {
-        try {
+    public Parser(String path) throws IOException, ClassNotFoundException {
             FileInputStream fis = new FileInputStream(path);
             ObjectInputStream ois = new ObjectInputStream(fis);
             Parser p = (Parser) ois.readObject();
@@ -26,19 +25,13 @@ public class Parser implements Serializable {
             this.action = p.action;
             this.goTo = p.goTo;
             this.start = p.start;
-        } catch (IOException|ClassNotFoundException e) {
-            System.out.println("[-] Failed to load parser from \"" + path + "\": " + e);
-            generateParser(g);
-        }
+    }
 
-        try {
-            FileOutputStream fos = new FileOutputStream(path);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(this);
-            oos.close();
-        } catch (IOException e) {
-            System.out.println("[-] Failed to save parser to \"" + path + "\": " + e);
-        }
+    public void save(String path) throws IOException {
+        FileOutputStream fos = new FileOutputStream(path);
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(this);
+        oos.close();
     }
 
     private void generateParser(Grammar g) {
