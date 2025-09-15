@@ -41,6 +41,51 @@ public class Node {
         return symbol;
     }
 
+    public Terminal<?> getNextToken(Set<Symbol<?>> avoid) {
+        if (parent == null) {
+            return null;
+        }
+
+        List<Node> siblings = parent.getChildren();
+        List<Node> youngerSiblings = siblings.subList(indexInParent+1, siblings.size());
+
+        for (Node sibling: youngerSiblings) {
+            Terminal<?> found = sibling.getFirstToken(avoid);
+            if (found != null) {
+                return found;
+            }
+        }
+
+        if (avoid.contains(parent.symbol)) {
+            return null;
+        }
+
+        return parent.getNextToken(avoid);
+    }
+
+    public Terminal<?> getPreviousToken(Set<Symbol<?>> avoid) {
+        if (parent == null) {
+            return null;
+        }
+
+        List<Node> siblings = parent.getChildren();
+        List<Node> olderSiblings = siblings.subList(0, indexInParent);
+
+        for (int i = olderSiblings.size()-1; i >= 0; i--) {
+            Node sibling = olderSiblings.get(i);
+            Terminal<?> found = sibling.getLastToken(avoid);
+            if (found != null) {
+                return found;
+            }
+        }
+
+        if (avoid.contains(parent.symbol)) {
+            return null;
+        }
+
+        return parent.getPreviousToken(avoid);
+    }
+
     public Terminal<?> getFirstToken(Set<Symbol<?>> avoid) {
         if (avoid.contains(symbol)) {
             return null;
@@ -239,23 +284,23 @@ public class Node {
         return SearchResult.AVOIDED;
     }
 
-    public Symbol<?> findNextDescendant(Symbol<?> target) {
-        return findNextDescendant(Set.of(target), Set.of());
+    public Symbol<?> findFirstDescendant(Symbol<?> target) {
+        return findFirstDescendant(Set.of(target), Set.of());
     }
 
-    public Symbol<?> findNextDescendant(Set<Symbol<?>> targets) {
-        return findNextDescendant(targets, Set.of());
+    public Symbol<?> findFirstDescendant(Set<Symbol<?>> targets) {
+        return findFirstDescendant(targets, Set.of());
     }
 
-    public Symbol<?> findNextDescendant(Symbol<?> target, Symbol<?> avoid) {
-        return findNextDescendant(Set.of(target), Set.of(avoid));
+    public Symbol<?> findFirstDescendant(Symbol<?> target, Symbol<?> avoid) {
+        return findFirstDescendant(Set.of(target), Set.of(avoid));
     }
 
-    public Symbol<?> findNextDescendant(Symbol<?> target, Set<Symbol<?>> avoid) {
-        return findNextDescendant(Set.of(target), avoid);
+    public Symbol<?> findFirstDescendant(Symbol<?> target, Set<Symbol<?>> avoid) {
+        return findFirstDescendant(Set.of(target), avoid);
     }
 
-    public Symbol<?> findNextDescendant(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
+    public Symbol<?> findFirstDescendant(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
         if (avoid.contains(symbol)) {
             return null;
         }
@@ -265,7 +310,43 @@ public class Node {
         }
 
         for (Node child: children) {
-            Symbol<?> found = child.findNextDescendant(targets, avoid);
+            Symbol<?> found = child.findFirstDescendant(targets, avoid);
+            if (found != null) {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    public Symbol<?> findLastDescendant(Symbol<?> target) {
+        return findLastDescendant(Set.of(target), Set.of());
+    }
+
+    public Symbol<?> findLastDescendant(Set<Symbol<?>> targets) {
+        return findLastDescendant(targets, Set.of());
+    }
+
+    public Symbol<?> findLastDescendant(Symbol<?> target, Symbol<?> avoid) {
+        return findLastDescendant(Set.of(target), Set.of(avoid));
+    }
+
+    public Symbol<?> findLastDescendant(Symbol<?> target, Set<Symbol<?>> avoid) {
+        return findLastDescendant(Set.of(target), avoid);
+    }
+
+    public Symbol<?> findLastDescendant(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
+        if (avoid.contains(symbol)) {
+            return null;
+        }
+
+        if (targets.contains(symbol)) {
+            return symbol;
+        }
+
+        for (int i = children.size()-1; i >= 0; i--) {
+            Node child = children.get(i);
+            Symbol<?> found = child.findLastDescendant(targets, avoid);
             if (found != null) {
                 return found;
             }
@@ -299,7 +380,7 @@ public class Node {
         List<Node> youngerSiblings = siblings.subList(indexInParent+1, siblings.size());
 
         for (Node sibling: youngerSiblings) {
-            Symbol<?> found = sibling.findNextDescendant(targets, avoid);
+            Symbol<?> found = sibling.findFirstDescendant(targets, avoid);
             if (found != null) {
                 return found;
             }
@@ -310,6 +391,45 @@ public class Node {
         }
 
         return parent.findNextFollowing(targets, avoid);
+    }
+
+    public Symbol<?> findPreviousPreceding(Symbol<?> target) {
+        return findPreviousPreceding(Set.of(target), Set.of());
+    }
+
+    public Symbol<?> findPreviousPreceding(Set<Symbol<?>> targets) {
+        return findPreviousPreceding(targets, Set.of());
+    }
+
+    public Symbol<?> findPreviousPreceding(Symbol<?> target, Symbol<?> avoid) {
+        return findPreviousPreceding(Set.of(target), Set.of(avoid));
+    }
+
+    public Symbol<?> findPreviousPreceding(Symbol<?> target, Set<Symbol<?>> avoid) {
+        return findPreviousPreceding(Set.of(target), avoid);
+    }
+
+    public Symbol<?> findPreviousPreceding(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
+        if (parent == null) {
+            return null;
+        }
+
+        List<Node> siblings = parent.getChildren();
+        List<Node> olderSiblings = siblings.subList(0, indexInParent);
+
+        for (int i = olderSiblings.size()-1; i >= 0; i--) {
+            Node sibling = olderSiblings.get(i);
+            Symbol<?> found = sibling.findLastDescendant(targets, avoid);
+            if (found != null) {
+                return found;
+            }
+        }
+
+        if (avoid.contains(parent.symbol)) {
+            return null;
+        }
+
+        return parent.findPreviousPreceding(targets, avoid);
     }
 
     public Symbol<?> findNext(Symbol<?> target) {
@@ -337,7 +457,7 @@ public class Node {
         List<Node> youngerSiblings = siblings.subList(indexInParent, siblings.size());
 
         for (Node sibling: youngerSiblings) {
-            Symbol<?> found = sibling.findNextDescendant(targets, avoid);
+            Symbol<?> found = sibling.findFirstDescendant(targets, avoid);
             if (found != null) {
                 return found;
             }
@@ -351,28 +471,28 @@ public class Node {
 
     }
 
-    public Set<Node> findAllDescendants(Symbol<?> target) {
+    public List<Node> findAllDescendants(Symbol<?> target) {
         return findAllDescendants(Set.of(target), Set.of());
     }
 
-    public Set<Node> findAllDescendants(Set<Symbol<?>> targets) {
+    public List<Node> findAllDescendants(Set<Symbol<?>> targets) {
         return findAllDescendants(targets, Set.of());
     }
 
-    public Set<Node> findAllDescendants(Symbol<?> target, Symbol<?> avoid) {
+    public List<Node> findAllDescendants(Symbol<?> target, Symbol<?> avoid) {
         return findAllDescendants(Set.of(target), Set.of(avoid));
     }
 
-    public Set<Node> findAllDescendants(Symbol<?> target, Set<Symbol<?>> avoid) {
+    public List<Node> findAllDescendants(Symbol<?> target, Set<Symbol<?>> avoid) {
         return findAllDescendants(Set.of(target), avoid);
     }
 
-    public Set<Node> findAllDescendants(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
+    public List<Node> findAllDescendants(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
         if (avoid.contains(symbol)) {
-            return Set.of();
+            return List.of();
         }
 
-        Set<Node> found = new HashSet<>();
+        List<Node> found = new ArrayList<>();
         if (targets.contains(symbol)) {
             found.add(this);
         }
