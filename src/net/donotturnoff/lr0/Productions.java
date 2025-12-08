@@ -20,20 +20,22 @@ public class Productions {
         }
     }
 
-    public Set<Production> get() {
+    public Set<Production> get() throws GrammarException {
         Set<Production> ps = new HashSet<>();
 
         for (NonTerminal head: productions.keySet()) {
-            for (List<Symbol<?>> body: productions.get(head)) {
-                ps.add(new Production(head, body));
-            }
+            ps.addAll(this.get(head));
         }
 
         return ps;
     }
 
-    public Set<Production> get(NonTerminal head) {
+    public Set<Production> get(NonTerminal head) throws GrammarException {
         Set<List<Symbol<?>>> bodies = productions.get(head);
+
+        if (bodies.isEmpty()) {
+            throw new GrammarException("No productions for head " + head.getName());
+        }
 
         Set<Production> ps = new HashSet<>();
         for (List<Symbol<?>> body: bodies) {

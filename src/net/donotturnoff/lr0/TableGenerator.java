@@ -9,13 +9,13 @@ public class TableGenerator {
     private final Grammar g;
     private Set<Item> start;
     
-    public TableGenerator(Grammar g) {
+    public TableGenerator(Grammar g) throws GrammarException {
         this.states = new HashSet<>();
         this.g = g;
         constructStates();
     }
     
-    private Set<Item> closure(Set<Item> s) {
+    private Set<Item> closure(Set<Item> s) throws GrammarException {
         Set<Item> closure = new HashSet<>(s);
         
         boolean altered; 
@@ -36,7 +36,7 @@ public class TableGenerator {
         return closure;
     }
     
-    private Set<Item> goTo(Set<Item> s, Symbol<?> x) {
+    private Set<Item> goTo(Set<Item> s, Symbol<?> x) throws GrammarException {
         Set<Item> next = new HashSet<>();
         for (Item i: s) {
             Symbol<?> nextSymbol = i.getNextSymbol();
@@ -44,11 +44,10 @@ public class TableGenerator {
                 next.add(new Item(i.getProduction(), i.getIndex()+1));
             }
         }
-        Set<Item> c = closure(next);
-        return c;
+        return closure(next);
     }
     
-    private void constructStates() {
+    private void constructStates() throws GrammarException {
         Item seedItem = new Item(g.getStartProduction(), 0);
         start = new HashSet<>();
         start.add(seedItem);
@@ -74,7 +73,7 @@ public class TableGenerator {
         return start;
     }
     
-    public Table<Set<Item>, NonTerminal, Set<Item>> getGoTo() {
+    public Table<Set<Item>, NonTerminal, Set<Item>> getGoTo() throws GrammarException {
         Table<Set<Item>, NonTerminal, Set<Item>> goTo = new Table<>();
         
         for (Set<Item> s: states) {
@@ -91,7 +90,7 @@ public class TableGenerator {
         return goTo;
     }
      
-    public Table<Set<Item>, Terminal<?>, Action> getAction() {
+    public Table<Set<Item>, Terminal<?>, Action> getAction() throws GrammarException {
         Table<Set<Item>, Terminal<?>, Action> action = new Table<>();
 
         for (Set<Item> s: states) {

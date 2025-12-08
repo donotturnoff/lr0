@@ -13,7 +13,7 @@ public class Parser implements Serializable {
     private transient Terminal<?> lastToken;
     private transient int i = -1;
     
-    public Parser(Grammar g) {
+    public Parser(Grammar g) throws GrammarException {
         generateParser(g);
     }
 
@@ -34,7 +34,7 @@ public class Parser implements Serializable {
         oos.close();
     }
 
-    private void generateParser(Grammar g) {
+    private void generateParser(Grammar g) throws GrammarException {
         TableGenerator tg = new TableGenerator(g);
         action = tg.getAction();
         goTo = tg.getGoTo();

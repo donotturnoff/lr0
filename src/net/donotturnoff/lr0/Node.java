@@ -126,6 +126,91 @@ public class Node {
         return null;
     }
 
+    public Node getNextLeaf(Set<Symbol<?>> avoid) {
+        if (parent == null) {
+            return null;
+        }
+
+        List<Node> siblings = parent.getChildren();
+        List<Node> youngerSiblings = siblings.subList(indexInParent+1, siblings.size());
+
+        for (Node sibling: youngerSiblings) {
+            Node found = sibling.getFirstLeaf(avoid);
+            if (found != null) {
+                return found;
+            }
+        }
+
+        if (avoid.contains(parent.symbol)) {
+            return null;
+        }
+
+        return parent.getNextLeaf(avoid);
+    }
+
+    public Node getPreviousLeaf(Set<Symbol<?>> avoid) {
+        if (parent == null) {
+            return null;
+        }
+
+        List<Node> siblings = parent.getChildren();
+        List<Node> olderSiblings = siblings.subList(0, indexInParent);
+
+        for (int i = olderSiblings.size()-1; i >= 0; i--) {
+            Node sibling = olderSiblings.get(i);
+            Node found = sibling.getLastLeaf(avoid);
+            if (found != null) {
+                return found;
+            }
+        }
+
+        if (avoid.contains(parent.symbol)) {
+            return null;
+        }
+
+        return parent.getPreviousLeaf(avoid);
+    }
+
+    public Node getFirstLeaf(Set<Symbol<?>> avoid) {
+        if (avoid.contains(symbol)) {
+            return null;
+        }
+
+        if (children.isEmpty()) {
+            return this;
+        }
+
+        for (Node child: children) {
+            Node n = child.getFirstLeaf(avoid);
+            if (n != null) {
+                return n;
+            }
+        }
+
+        return null;
+    }
+
+    public Node getLastLeaf(Set<Symbol<?>> avoid) {
+        if (avoid.contains(symbol)) {
+            return null;
+        }
+
+        if (children.isEmpty()) {
+            return this;
+        }
+
+        ListIterator<Node> childIterator = children.listIterator(children.size());
+
+        while (childIterator.hasPrevious()) {
+            Node n = childIterator.previous().getLastLeaf(avoid);
+            if (n != null) {
+                return n;
+            }
+        }
+
+        return null;
+    }
+
     public boolean isPrecededByA(Symbol<?> target) {
         return isPrecededByA(Set.of(target), Set.of());
     }
@@ -468,37 +553,44 @@ public class Node {
         }
 
         return parent.findNextFollowing(targets, avoid);
-
     }
 
     public List<Node> findAllDescendants(Symbol<?> target) {
-        return findAllDescendants(Set.of(target), Set.of());
+        return findAllDescendants(Set.of(target), Set.of(), Set.of());
     }
 
     public List<Node> findAllDescendants(Set<Symbol<?>> targets) {
-        return findAllDescendants(targets, Set.of());
+        return findAllDescendants(targets, Set.of(), Set.of());
     }
 
     public List<Node> findAllDescendants(Symbol<?> target, Symbol<?> avoid) {
-        return findAllDescendants(Set.of(target), Set.of(avoid));
+        return findAllDescendants(Set.of(target), Set.of(avoid), Set.of());
     }
 
     public List<Node> findAllDescendants(Symbol<?> target, Set<Symbol<?>> avoid) {
-        return findAllDescendants(Set.of(target), avoid);
+        return findAllDescendants(Set.of(target), avoid, Set.of());
     }
 
     public List<Node> findAllDescendants(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
+        return findAllDescendants(targets, avoid, Set.of());
+    }
+
+    public List<Node> findAllDescendants(Set<Symbol<?>> targets, Set<Symbol<?>> avoid, Set<?> values) {
         if (avoid.contains(symbol)) {
             return List.of();
         }
 
         List<Node> found = new ArrayList<>();
         if (targets.contains(symbol)) {
-            found.add(this);
+            if (values.isEmpty() || (this.getSymbol() instanceof Terminal<?> t && values.contains(t.getValue()))) {
+                found.add(this);
+            }
         }
 
         for (Node child: children) {
-            found.addAll(child.findAllDescendants(targets, avoid));
+            if (values.isEmpty() || (this.getSymbol() instanceof Terminal<?> t && values.contains(t.getValue()))) {
+                found.addAll(child.findAllDescendants(targets, avoid));
+            }
         }
 
         return found;

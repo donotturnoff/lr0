@@ -56,11 +56,12 @@ public class ArithmeticDemo {
         productions.add(ntFloat, List.of(tMinus, tUFloat));
         productions.add(ntFloat, List.of(tUFloat));
 
-        Grammar g = new Grammar(productions, ntStart);
-
         try {
+            Grammar g = new Grammar(productions, ntStart);
             Parser p = new Parser(g);
             System.out.println(p.parse(tokens));
+        } catch (GrammarException e) {
+            System.out.println("GrammarException: " + e.getMessage());
         } catch (ParsingException e) {
             System.out.println("ParsingException: " + e.getMessage());
         }

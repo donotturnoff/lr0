@@ -13,7 +13,7 @@ public class Grammar {
     private Map<Symbol<?>, Set<Terminal<?>>> first;
     private Map<NonTerminal, Set<Terminal<?>>> follow;
 
-    public Grammar(Productions productions, NonTerminal originalStart) {
+    public Grammar(Productions productions, NonTerminal originalStart) throws GrammarException {
         this.productions = productions;
         this.symbols = productions.getSymbols();
         computeFirst();
@@ -21,7 +21,7 @@ public class Grammar {
         productions.add(new AugmentedStartSymbol(), List.of(originalStart));
     }
     
-    private void computeFirst() {
+    private void computeFirst() throws GrammarException {
         first = new HashMap<>();        
         first.put(new Epsilon(), Set.of());
         
@@ -57,7 +57,7 @@ public class Grammar {
         } while (altered);
     }
     
-    private void computeFollow(NonTerminal start) {
+    private void computeFollow(NonTerminal start) throws GrammarException {
         follow = new HashMap<>();        
         
         for (Symbol<?> s: symbols) {
@@ -100,7 +100,7 @@ public class Grammar {
         } while (altered);
     }
     
-    public Production getStartProduction() {
+    public Production getStartProduction() throws GrammarException {
         return List.copyOf(productions.get(new AugmentedStartSymbol())).get(0);
     }
     
@@ -108,7 +108,7 @@ public class Grammar {
         return symbols;
     }
 
-    public Set<Production> getProductions(NonTerminal head) {
+    public Set<Production> getProductions(NonTerminal head) throws GrammarException {
         return productions.get(head);
     }
     
