@@ -588,9 +588,7 @@ public class Node {
         }
 
         for (Node child: children) {
-            if (values.isEmpty() || (this.getSymbol() instanceof Terminal<?> t && values.contains(t.getValue()))) {
-                found.addAll(child.findAllDescendants(targets, avoid));
-            }
+            found.addAll(child.findAllDescendants(targets, avoid, values));
         }
 
         return found;
