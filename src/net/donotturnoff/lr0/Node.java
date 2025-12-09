@@ -277,6 +277,18 @@ public class Node {
         return parent.isFollowedByA(targets, avoid);
     }
 
+    public boolean isDescendantOfA(Set<Symbol<?>> targets, Set<Symbol<?>> avoid) {
+        if (parent == null || avoid.contains(parent.getSymbol())) {
+            return false;
+        }
+
+        if (targets.contains(parent.getSymbol())) {
+            return true;
+        }
+
+        return parent.isDescendantOfA(targets, avoid);
+    }
+
     public boolean startsWithA(Symbol<?> target) {
         return startsWithA(Set.of(target), Set.of());
     }
